@@ -171,6 +171,18 @@ struct ColorParser: ParserPrinter {
     }
 }
 
+struct FontSizeParser: ParserPrinter {
+    var body: some ParserPrinter<Substring, Int> {
+        ParsePrint {
+            Int.parser()
+            OneOf {
+                "px"
+                "pt"
+            }
+        }
+    }
+}
+
 struct RGBParser: ParserPrinter {
     var body: some ParserPrinter<Substring, SRT.Color.RGB> {
         ParsePrint(.memberwise(SRT.Color.RGB.init(red:green:blue:))) {

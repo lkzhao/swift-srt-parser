@@ -5,7 +5,8 @@ struct StyledTextParser {
         BoldComponentParser(),
         ItalicComponentParser(),
         UnderlineComponentParser(),
-        ColorComponentParser()
+        ColorComponentParser(),
+        FontSizeComponentParser()
     ]
 
     func parse(_ text: String) throws -> SRT.StyledText {
@@ -45,6 +46,9 @@ struct StyledTextParser {
             let color = try ColorParser().print(color)
             let children = try components.map(print).joined()
             return "<font color=\"\(color)\">\(children)</font>"
+        case .fontSize(let size, let components):
+            let children = try components.map(print).joined()
+            return "<font size=\"\(size)px\">\(children)</font>"
         }
     }
 
@@ -192,6 +196,36 @@ private struct ColorComponentParser: StyledTextComponentParser {
         let color = try ColorParser().parse(String(match[colorReference]))
         let children = try StyledTextParser().parse(String(match[textReference]))
         let component = SRT.StyledText.Component.color(color: color, children: children.components)
+
+        return (match.range, component)
+    }
+}
+
+private struct FontSizeComponentParser: StyledTextComponentParser {
+    private let sizeReference = Reference(Substring.self)
+    private let textReference = Reference(Substring.self)
+
+    private var regex: Regex<(Substring, Substring, Substring)> {
+        Regex {
+            "<font size=\""
+            Capture(as: sizeReference) {
+                ZeroOrMore(.any)
+            }
+            "\">"
+            Capture(as: textReference) {
+                ZeroOrMore(.any)
+            }
+            "</font>"
+        }
+        .repetitionBehavior(.reluctant)
+        .ignoresCase()
+    }
+
+    func parse(_ text: String) throws -> (range: Range<String.Index>, component: SRT.StyledText.Component)? {
+        guard let match = try regex.firstMatch(in: text) else { return nil }
+        let size = try FontSizeParser().parse(String(match[sizeReference]))
+        let children = try StyledTextParser().parse(String(match[textReference]))
+        let component = SRT.StyledText.Component.fontSize(size: size, children: children.components)
 
         return (match.range, component)
     }

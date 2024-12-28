@@ -45,6 +45,10 @@ extension SRT {
             self.start = start
             self.end = end
         }
+
+        public var text: String {
+            try! String(TimingParser().print(self))
+        }
     }
 }
 
@@ -69,6 +73,17 @@ extension SRT {
             self.minutes = minutes
             self.seconds = seconds
             self.milliseconds = milliseconds
+        }
+
+        public init(interval: TimeInterval) {
+            let seconds = Int(interval)
+            let minutes = seconds / 60
+            let hours = minutes / 60
+
+            self.hours = hours
+            self.minutes = minutes % 60
+            self.seconds = seconds % 60
+            self.milliseconds = Int((interval - TimeInterval(seconds)) * 1000)
         }
     }
 }
@@ -163,6 +178,7 @@ extension SRT {
             case italic(children: [Component])
             case underline(children: [Component])
             case color(color: SRT.Color, children: [Component])
+            case fontSize(size: Int, children: [Component])
         }
 
         public let components: [Component]
@@ -173,6 +189,10 @@ extension SRT {
 
         public init(text: String) throws {
             self = try StyledTextParser().parse(text)
+        }
+
+        public var text: String {
+            try! StyledTextParser().print(self)
         }
     }
 }
